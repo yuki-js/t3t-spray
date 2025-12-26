@@ -26,7 +26,7 @@ object XposedConfigLoader {
 
     private fun normalizeSystemCode(raw: String): String? {
         val normalized = raw.trim().takeLast(4).uppercase(Locale.ROOT)
-        return if (normalized.matches(Regex("[0-9A-Fa-f]{4}"))) normalized else null
+        return if (normalized.matches(Regex("[0-9A-F]{4}"))) normalized else null
     }
 
     private fun normalizeIdm(raw: String): String {

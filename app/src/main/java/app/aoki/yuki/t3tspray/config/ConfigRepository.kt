@@ -2,12 +2,14 @@ package app.aoki.yuki.t3tspray.config
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.io.File
 import java.util.Locale
 
 class ConfigRepository(context: Context) {
 
     private val prefs: SharedPreferences =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_WORLD_READABLE)
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val prefsFile = File(context.applicationInfo.dataDir, "shared_prefs/$PREFS_NAME.xml")
 
     fun load(): SprayConfig {
         val enabled = prefs.getBoolean(KEY_ENABLED, true)
@@ -25,12 +27,13 @@ class ConfigRepository(context: Context) {
             .putBoolean(KEY_ENABLED, config.enabled)
             .putString(KEY_IDM, normalizeIdm(config.idm))
             .putString(KEY_SYSTEM_CODES, config.systemCodes.joinToString(",") { normalizeSystemCode(it) ?: "" })
-            .apply()
+            .commit()
+        prefsFile.setReadable(true, false)
     }
 
     private fun normalizeSystemCode(raw: String): String? {
         val normalized = raw.trim().takeLast(4).uppercase(Locale.ROOT)
-        return if (normalized.matches(Regex("[0-9A-Fa-f]{4}"))) normalized else null
+        return if (normalized.matches(Regex("[0-9A-F]{4}"))) normalized else null
     }
 
     private fun normalizeIdm(raw: String): String {
