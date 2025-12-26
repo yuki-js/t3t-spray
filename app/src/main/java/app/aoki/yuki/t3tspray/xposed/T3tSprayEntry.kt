@@ -1,5 +1,6 @@
 package app.aoki.yuki.t3tspray.xposed
 
+import app.aoki.yuki.t3tspray.config.ConfigSanitizer
 import app.aoki.yuki.t3tspray.config.SprayConfig
 import app.aoki.yuki.t3tspray.config.XposedConfigLoader
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -52,7 +53,11 @@ class T3tSprayEntry : IXposedHookLoadPackage, IXposedHookZygoteInit {
         }.getOrNull() ?: return
 
         config.systemCodes.forEachIndexed { index, rawSystemCode ->
-            val systemCode = normalizeSystemCode(rawSystemCode)
+            val systemCode = ConfigSanitizer.normalizeSystemCode(rawSystemCode)
+                ?: run {
+                    XposedBridge.log("T3tSpray: skip invalid SC=$rawSystemCode")
+                    return@forEachIndexed
+                }
             val idm = deriveIdm(config.idm, index)
             runCatching {
                 registerMethod.invoke(target, idm, systemCode)
@@ -63,13 +68,10 @@ class T3tSprayEntry : IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
     }
 
-    private fun normalizeSystemCode(systemCode: String): String =
-        systemCode.trim().uppercase(Locale.ROOT).padStart(4, '0').takeLast(4)
-
     private fun deriveIdm(base: String, offset: Int): String {
         val cleaned = base.trim().uppercase(Locale.ROOT).replace("[^0-9A-F]".toRegex(), "")
         val padded = cleaned.padEnd(16, '0').take(16)
-        val suffix = offset.coerceAtLeast(0).and(0xFF).toString(16)
+        val suffix = offset.coerceAtLeast(0).and(BYTE_MASK).toString(16)
             .uppercase(Locale.ROOT)
             .padStart(2, '0')
         return padded.take(14) + suffix
@@ -78,5 +80,6 @@ class T3tSprayEntry : IXposedHookLoadPackage, IXposedHookZygoteInit {
     companion object {
         private const val NFC_PACKAGE = "com.android.nfc"
         private const val CACHE_CLASS = "com.android.nfc.cardemulation.RegisteredT3tIdentifiersCache"
+        private const val BYTE_MASK = 0xFF
     }
 }

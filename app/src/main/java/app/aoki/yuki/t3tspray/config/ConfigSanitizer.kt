@@ -4,8 +4,9 @@ import java.util.Locale
 
 object ConfigSanitizer {
     fun normalizeSystemCode(raw: String): String? {
-        val normalized = raw.trim().takeLast(4).uppercase(Locale.ROOT)
-        return if (normalized.matches(Regex("[0-9A-F]{4}"))) normalized else null
+        val cleaned = raw.trim().uppercase(Locale.ROOT).replace("[^0-9A-F]".toRegex(), "")
+        if (cleaned.isEmpty() || cleaned.length > 4) return null
+        return cleaned.padStart(4, '0')
     }
 
     fun normalizeIdm(raw: String): String {
