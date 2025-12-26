@@ -3,7 +3,6 @@ package app.aoki.yuki.t3tspray.config
 import android.content.Context
 import android.content.SharedPreferences
 import java.io.File
-import java.util.Locale
 
 class ConfigRepository(context: Context) {
 
@@ -14,31 +13,29 @@ class ConfigRepository(context: Context) {
     fun load(): SprayConfig {
         val enabled = prefs.getBoolean(KEY_ENABLED, true)
         val idm = prefs.getString(KEY_IDM, SprayConfig.DEFAULT_IDM) ?: SprayConfig.DEFAULT_IDM
-        val systemCodes = prefs.getString(KEY_SYSTEM_CODES, null)
+        val storedCodes = prefs.getString(KEY_SYSTEM_CODES, null)
             ?.split(",")
-            ?.mapNotNull { normalizeSystemCode(it) }
+            ?.mapNotNull { ConfigSanitizer.normalizeSystemCode(it) }
             ?.takeIf { it.isNotEmpty() }
             ?: SprayConfig.DEFAULT_SYSTEM_CODES
-        return SprayConfig(enabled = enabled, idm = normalizeIdm(idm), systemCodes = systemCodes)
+        return SprayConfig(
+            enabled = enabled,
+            idm = ConfigSanitizer.normalizeIdm(idm),
+            systemCodes = storedCodes
+        )
     }
 
     fun save(config: SprayConfig) {
+        val sanitizedCodes = config.systemCodes.mapNotNull { ConfigSanitizer.normalizeSystemCode(it) }
+            .takeIf { it.isNotEmpty() }
+            ?: SprayConfig.DEFAULT_SYSTEM_CODES
+
         prefs.edit()
             .putBoolean(KEY_ENABLED, config.enabled)
-            .putString(KEY_IDM, normalizeIdm(config.idm))
-            .putString(KEY_SYSTEM_CODES, config.systemCodes.joinToString(",") { normalizeSystemCode(it) ?: "" })
+            .putString(KEY_IDM, ConfigSanitizer.normalizeIdm(config.idm))
+            .putString(KEY_SYSTEM_CODES, sanitizedCodes.joinToString(","))
             .commit()
         prefsFile.setReadable(true, false)
-    }
-
-    private fun normalizeSystemCode(raw: String): String? {
-        val normalized = raw.trim().takeLast(4).uppercase(Locale.ROOT)
-        return if (normalized.matches(Regex("[0-9A-F]{4}"))) normalized else null
-    }
-
-    private fun normalizeIdm(raw: String): String {
-        val cleaned = raw.trim().uppercase(Locale.ROOT).replace("[^0-9A-F]".toRegex(), "")
-        return cleaned.padEnd(16, '0').take(16)
     }
 
     companion object {

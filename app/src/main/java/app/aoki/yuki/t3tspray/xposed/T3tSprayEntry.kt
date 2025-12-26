@@ -72,7 +72,7 @@ class T3tSprayEntry : IXposedHookLoadPackage, IXposedHookZygoteInit {
         val suffix = offset.coerceAtLeast(0).and(0xFF).toString(16)
             .uppercase(Locale.ROOT)
             .padStart(2, '0')
-        return padded.dropLast(2) + suffix
+        return padded.take(14) + suffix
     }
 
     companion object {

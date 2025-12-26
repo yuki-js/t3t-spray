@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">T3T Spray</string>
     <string name="xposed_description">Spray well-known FeliCa system codes (0003, FE00, FE0F) into the NFC controller.</string>
-    <string name="summary">Well-known SC を撒いて、SENSF_REQ のワイルドカードでも任意の IDm を返すための設定ツール。保存後は LSPosed からモジュールを再読み込みしてください。</string>
+    <string name="summary">Spray well-known system codes so SENSF_REQ wildcards return your chosen IDm. After saving, reload the module from LSPosed.</string>
     <string name="enable_spray">Enable spray</string>
     <string name="label_idm">Base IDm (hex, 8 bytes)</string>
     <string name="hint_idm">03F0FE0000000000</string>
